@@ -42,21 +42,34 @@ contract SparrowStaking is ISparrowStaking {
         uint256 totalWithdrawedIjm;
         for (uint256 i = 0; i < ids.length; i++) {
             uint256 id = ids[i];
+            uint256 sIjmAmount = sIjmAmounts[i];
             require(id < totalNFTs);
             require(nft.ownerOf(id) == msg.sender);
+            require(sIjmAmount > 0);
+
             if (!nftSIjmInitialized[id]) {
                 _nftSIjmAmount[id] = initialSIjmAmountPerId;
                 nftSIjmInitialized[id] = true;
             }
 
-            uint256 withdrawedIjm = sIjm.unstake(sIjmAmounts[i]);
+            uint256 withdrawedIjm;
+            if(sIjmAmount == uint256(-1)) {
+                uint256 baseSIjm = sIjm.amountToWithdrawIJM(baseDepositedIjm);
+                uint256 withdrawableSIjm = _nftSIjmAmount[id].sub(baseSIjm);
+                require(withdrawableSIjm > 0);
 
-            uint256 nftSIjm_left = _nftSIjmAmount[id].sub(sIjmAmounts[i]);
+                _nftSIjmAmount[id] = baseSIjm;
+                
+                withdrawedIjm = sIjm.unstake(withdrawableSIjm);
+            } else {
+                withdrawedIjm = sIjm.unstake(sIjmAmount);
+                uint256 nftSIjm_left = _nftSIjmAmount[id].sub(sIjmAmount);
 
-            uint256 withdrawableIJM = nftSIjm_left.mul(ijm.balanceOf(address(sIjm))).div(sIjm.totalSupply());
-            require(withdrawableIJM >= baseDepositedIjm);
+                uint256 withdrawableIJM = nftSIjm_left.mul(ijm.balanceOf(address(sIjm))).div(sIjm.totalSupply());
+                require(withdrawableIJM >= baseDepositedIjm);
 
-            _nftSIjmAmount[id] = nftSIjm_left;
+                _nftSIjmAmount[id] = nftSIjm_left;
+            }
 
             totalWithdrawedIjm = totalWithdrawedIjm.add(withdrawedIjm);
             emit WithdrawReward(msg.sender, id, withdrawedIjm);
