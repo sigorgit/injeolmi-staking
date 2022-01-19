@@ -22,7 +22,7 @@ interface ISparrowStaking {
     function nftSIjmInitialized(uint256 id) external view returns (bool);
 
     function initialize() external;
-    function withdrawReward(uint256[] calldata ids) external;
+    function withdrawReward(uint256[] calldata ids, uint256[] calldata sIjmAmounts) external;
     function withdrawableReward(uint256[] calldata ids) external view returns (uint256);
     function nftSIjmAmount(uint256 id) external view returns (uint256);
 }
