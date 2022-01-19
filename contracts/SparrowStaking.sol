@@ -37,7 +37,9 @@ contract SparrowStaking is ISparrowStaking {
         emit Initialize(msg.sender, initialSIjmAmountPerId);
     }
 
-    function withdrawReward(uint256[] calldata ids) external {
+    function withdrawReward(uint256[] calldata ids, uint256[] calldata sIjmAmounts) external {
+        require(ids.length == sIjmAmounts.length);
+        uint256 totalWithdrawedIjm;
         for (uint256 i = 0; i < ids.length; i++) {
             uint256 id = ids[i];
             require(id < totalNFTs);
@@ -47,17 +49,19 @@ contract SparrowStaking is ISparrowStaking {
                 nftSIjmInitialized[id] = true;
             }
 
-            uint256 baseSIjm = sIjm.amountToWithdrawIJM(baseDepositedIjm);
-            uint256 withdrawableSIjm = _nftSIjmAmount[id].sub(baseSIjm);
-            require(withdrawableSIjm > 0);
+            uint256 withdrawedIjm = sIjm.unstake(sIjmAmounts[i]);
 
-            _nftSIjmAmount[id] = baseSIjm;
+            uint256 nftSIjm_left = _nftSIjmAmount[id].sub(sIjmAmounts[i]);
 
-            uint256 withdrawedIjm = sIjm.unstake(withdrawableSIjm);
-            ijm.transfer(msg.sender, withdrawedIjm);
+            uint256 withdrawableIJM = nftSIjm_left.mul(ijm.balanceOf(address(sIjm))).div(sIjm.totalSupply());
+            require(withdrawableIJM >= baseDepositedIjm);
 
+            _nftSIjmAmount[id] = nftSIjm_left;
+
+            totalWithdrawedIjm = totalWithdrawedIjm.add(withdrawedIjm);
             emit WithdrawReward(msg.sender, id, withdrawedIjm);
         }
+        ijm.transfer(msg.sender, totalWithdrawedIjm);
     }
 
     function withdrawableReward(uint256[] calldata ids) external view returns (uint256) {
