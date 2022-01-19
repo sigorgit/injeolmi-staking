@@ -37,28 +37,40 @@ contract SparrowStaking is ISparrowStaking {
         emit Initialize(msg.sender, initialSIjmAmountPerId);
     }
 
-    function withdrawReward(uint256 id) external {
-        require(id < totalNFTs);
-        require(nft.ownerOf(id) == msg.sender);
-        if (!nftSIjmInitialized[id]) {
-            _nftSIjmAmount[id] = initialSIjmAmountPerId;
-            nftSIjmInitialized[id] = true;
+    function withdrawReward(uint256[] calldata ids) external {
+        for (uint256 i = 0; i < ids.length; i++) {
+            uint256 id = ids[i];
+            require(id < totalNFTs);
+            require(nft.ownerOf(id) == msg.sender);
+            if (!nftSIjmInitialized[id]) {
+                _nftSIjmAmount[id] = initialSIjmAmountPerId;
+                nftSIjmInitialized[id] = true;
+            }
+
+            uint256 baseSIjm = sIjm.amountToWithdrawIJM(baseDepositedIjm);
+            uint256 withdrawableSIjm = _nftSIjmAmount[id].sub(baseSIjm);
+            require(withdrawableSIjm > 0);
+
+            _nftSIjmAmount[id] = baseSIjm;
+
+            uint256 withdrawedIjm = sIjm.unstake(withdrawableSIjm);
+            ijm.transfer(msg.sender, withdrawedIjm);
+
+            emit WithdrawReward(msg.sender, id, withdrawedIjm);
         }
-
-        uint256 baseSIjm = sIjm.amountToWithdrawIJM(baseDepositedIjm);
-        uint256 withdrawableSIjm = _nftSIjmAmount[id].sub(baseSIjm);
-        require(withdrawableSIjm > 0);
-
-        _nftSIjmAmount[id] = baseSIjm;
-
-        uint256 withdrawedIjm = sIjm.unstake(withdrawableSIjm);
-        ijm.transfer(msg.sender, withdrawedIjm);
-
-        emit WithdrawReward(msg.sender, id, withdrawedIjm);
     }
 
-    function withdrawableReward(uint256 id) external view returns (uint256) {
-        return nftSIjmAmount(id).mul(sIjm.ratio()).div(1e18).sub(baseDepositedIjm);
+    function withdrawableReward(uint256[] calldata ids) external view returns (uint256) {
+        uint256 totalWithdrawableReward;
+        for (uint256 i = 0; i < ids.length; i++) {
+            uint256 totalIjm = nftSIjmAmount(ids[i]).mul(sIjm.ratio()).div(1e18);
+            if (totalIjm >= baseDepositedIjm) {
+                totalWithdrawableReward = totalWithdrawableReward.add(totalIjm - baseDepositedIjm);
+            } else {
+                return 0;
+            }
+        }
+        return totalWithdrawableReward;
     }
 
     function nftSIjmAmount(uint256 id) public view returns (uint256) {
