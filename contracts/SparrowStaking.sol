@@ -58,7 +58,7 @@ contract SparrowStaking is ISparrowStaking {
     }
 
     function withdrawableReward(uint256 id) external view returns (uint256) {
-        return nftSIjmAmount(id).mul(sIjm.ratio()).sub(baseDepositedIjm);
+        return nftSIjmAmount(id).mul(sIjm.ratio()).div(1e18).sub(baseDepositedIjm);
     }
 
     function nftSIjmAmount(uint256 id) public view returns (uint256) {

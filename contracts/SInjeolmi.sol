@@ -34,8 +34,9 @@ contract SInjeolmi is ISInjeolmi, KIP7, KIP7Metadata("sInjeolmi", "sIJM", 18) {
         emit Unstake(msg.sender, amountOfIJM);
     }
 
+    //multiplied by 1e18
     function ratio() external view returns (uint256) {
-        return ijm.balanceOf(address(this)).div(totalSupply());
+        return ijm.balanceOf(address(this)).mul(1e18).div(totalSupply());
     }
 
     function withdrawableIJM(address user) external view returns (uint256) {
