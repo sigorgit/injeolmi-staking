@@ -62,6 +62,7 @@ contract SparrowStaking is ISparrowStaking {
     }
 
     function nftSIjmAmount(uint256 id) public view returns (uint256) {
+        require(id < totalNFTs);
         return nftSIjmInitialized[id] ? _nftSIjmAmount[id] : initialSIjmAmountPerId;
     }
 }
