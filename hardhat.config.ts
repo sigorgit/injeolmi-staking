@@ -6,19 +6,32 @@ import { HardhatUserConfig } from "hardhat/types";
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.5.6",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: "0.5.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
       },
-    },
+      {
+        version: "0.8.14",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+    ],
   },
   networks: {
-    kovan: {
-      url: `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`,
-      accounts: [process.env.ADMIN || '0x0000000000000000000000000000000000000000000000000000000000000000'],
-      chainId: 42,
+    klaytn: {
+      url: "https://klaytn04.fandom.finance/",
+      accounts: [process.env.ADMIN || ''],
+      chainId: 8217,
     },
   },
   etherscan: {
